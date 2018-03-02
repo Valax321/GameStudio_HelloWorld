@@ -1,0 +1,11 @@
+{
+    "count": [20, 30],
+    "texture": "assets/textures/devtexture.png",
+    "color": ["#ffffff", "#aaaaaa"],
+    "collide": true,
+    "radius": [1, 2],
+    "lifetime": [3, 5],
+    "rotationRate": [360, 600],
+    "velocity": [{"x": -20, "y": 10}, {"x": 20, "y": 30}],
+    "bounceScale": 0.6
+}

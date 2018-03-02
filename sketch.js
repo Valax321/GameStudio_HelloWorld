@@ -1,32 +1,100 @@
+var DELTATIME = 1 / 60;
+
+function getNumberProperty(template, parameter)
+{
+    if (template[parameter] !== null)
+    {
+        var count = template[parameter];
+        if (Array.isArray(count))
+        {
+            return random(count[0], count[1]);
+        }
+        else
+        {
+            return count;
+        }
+    }
+}
+
+function getSingleValueProperty(template, parameter)
+{
+    if (template[parameter] !== null)
+    {
+        return template[parameter];
+    }
+}
+
+class ParticleSystem
+{
+    constructor(particleTemplate)
+    {
+        loadJSON(particleTemplate, (template) =>
+        {
+            this.texture = loadImage(getSingleValueProperty(template, "texture"));
+        });
+
+        this.instances = [];
+    }
+
+    spawnInstance(x, y)
+    {
+        var count = getNumberProperty(this.template, "count");
+        for (var i = 0; i < count; i++)
+        {
+            this.instances.push(new ParticleInstance(x, y, this));
+        }
+    }
+
+    draw()
+    {
+        for (var i = 0; i < this.instances.length; i++)
+        {
+            //Iterate over each instance and move it.
+        }
+    }
+}
+
+class ParticleInstance
+{
+    constructor(x, y, system)
+    {
+        this.x = x;
+        this.y = y;
+        this.system = system;
+        this.collide = getSingleValueProperty(system.template, "collide");
+        this.radius = getSingleValueProperty(system.template, "radius");
+        this.lifetime = getNumberProperty(system.template, "lifetime");
+    }
+
+    draw()
+    {
+        push();
+        pop();
+    }
+}
+
 var time = 0;
 var cameraRot;
+var devTexture;
+var particleTest;
 
 function preload()
 {
-
+    devTexture = loadImage("assets/textures/devtexture.png");
+    particleTest = new ParticleSystem("assets/particles/particle_test.json");
 }
 
 function setup()
 {
-  createCanvas(windowWidth, windowHeight, WEBGL);
-  cameraRot = createVector(0, 0, 0);
+    createCanvas(windowWidth, windowHeight);
 }
 
 function windowResized()
 {
-  resizeCanvas(windowWidth, windowHeight);
+    resizeCanvas(windowWidth, windowHeight);
 }
 
 function draw()
 {
-  time += 1 / 60; //60 is default update rate
-  background(abs(sin(time) * 1.5) * 256, abs(cos(time)) * 256, abs(sin(time) * 0.5) * 256);
-  var cameraDist = lerp(0, 600, sin(time));
-  var camPos = p5.Vector.mult(cameraRot, cameraDist);
-  var forward = p5.Vector.sub(camPos, createVector(0, 0, 0)).normalize();
-  var right = p5.Vector.cross(forward, createVector(0, 1, 0));
-  var up = p5.Vector.cross(forward, right);
-  camera(camPos.x, camPos.y, camPos.z, 0, 0, 0, up.x, up.y, up.z);
-  fill(128, 80, 0);
-  box(50);
+    background('#383838');
 }
