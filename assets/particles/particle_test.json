@@ -1,11 +1,12 @@
 {
     "count": [20, 30],
-    "texture": "assets/textures/devtexture.png",
-    "color": ["#ffffff", "#aaaaaa"],
+    "texture": "assets/textures/orange_glow.png",
+    "color": ["#ffffff", "#ca4500"],
     "collide": true,
-    "radius": [1, 2],
-    "lifetime": [3, 5],
+    "radius": [0.1, 1],
+    "lifetime": [2, 3],
+    "startRotation": [0, 359.9],
     "rotationRate": [360, 600],
-    "velocity": [{"x": -20, "y": 10}, {"x": 20, "y": 30}],
+    "velocity": [{"x": -20, "y": -10}, {"x": 20, "y": -30}],
     "bounceScale": 0.6
 }
