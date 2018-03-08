@@ -1,0 +1,13 @@
+{
+    "count": [10, 15],
+    "texture": "assets/textures/smoke.png",
+    "color": "#ffffff",
+    "gravity": false,
+    "collide": false,
+    "radius": [1, 2],
+    "lifetime": [5, 7],
+    "startRotation": [0, 359.9],
+    "rotationRate": [30, 100],
+    "velocity": [{"x": -50, "y": -200}, {"x": 50, "y": -600}],
+    "bounceScale": [0.6, 0.7]
+}

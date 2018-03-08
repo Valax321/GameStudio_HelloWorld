@@ -1,16 +1,28 @@
 const Constants =
 {
-    gravity: {x: 0, y: 91.8},
+    gravity: {x: 0, y: 918},
     deltaTime: 1 / 60
+}
+
+var timeScale = 1;
+
+function scaledDeltaTime()
+{
+    return (1 / getFrameRate()) * timeScale;
 }
 
 function clamp(value, min, max)
 {
-    if (value => max) return max;
+    if (value >= max) return max;
     else if (value <= min) return min;
     else return value;
 }
 
+/**
+ * Get a random number from a template.
+ * @param template The template object to get the number from.
+ * @param parameter The parameter string
+ */
 function getNumberProperty(template, parameter)
 {
     if (template[parameter] !== null)
@@ -27,6 +39,11 @@ function getNumberProperty(template, parameter)
     }
 }
 
+/**
+ * Get an object from a template.
+ * @param template The template object to get the number from.
+ * @param parameter The parameter string
+ */
 function getObjectProperty(template, parameter)
 {
     if (template[parameter] !== null)
@@ -43,6 +60,12 @@ function getObjectProperty(template, parameter)
     }
 }
 
+/**
+ * Get a vector from a template.
+ * NOTE: this vector doesn't have p5.js's vector prototype, so you can't call functions on it.
+ * @param template The template object to get the number from.
+ * @param parameter The parameter string
+ */
 function getVectorProperty(template, parameter)
 {
     if (template[parameter] !== null)
@@ -59,6 +82,16 @@ function getVectorProperty(template, parameter)
     }
 }
 
+function templateHasProperty(template, parameter)
+{
+    return template[parameter] !== null;
+}
+
+/**
+ * Get a non-random single value from a template.
+ * @param template The template object to get the number from.
+ * @param parameter The parameter string
+ */
 function getSingleValueProperty(template, parameter)
 {
     if (template[parameter] !== null)
@@ -67,6 +100,14 @@ function getSingleValueProperty(template, parameter)
     }
 }
 
+function groundRect()
+{
+    return {x: 0, y: windowHeight - 80, width: windowWidth, height: 80}
+}
+
+/**
+ * Data storage for a particle system.
+ */
 class ParticleSystem
 {
     constructor(particleTemplate)
@@ -113,6 +154,9 @@ class ParticleSystem
     }
 }
 
+/**
+ * Instance of a particle in a system.
+ */
 class ParticleInstance
 {
     constructor(x, y, system)
@@ -120,12 +164,14 @@ class ParticleInstance
         this.position = createVector(x, y);
         this.system = system;
         this.collide = getSingleValueProperty(system.template, "collide");
+        this.gravity = getSingleValueProperty(system.template, "gravity");
         this.radius = getNumberProperty(system.template, "radius");
         this.lifetime = getNumberProperty(system.template, "lifetime");
         this.velocity = getVectorProperty(system.template, "velocity");
         //this.color = getObjectProperty(system.template, "color"); //Color doesn't work well, as tint() has awful performance.
         this.rotation = getNumberProperty(system.template, "startRotation");
         this.rotationRate = getNumberProperty(system.template, "rotationRate");
+        this.bounceScale = getNumberProperty(system.template, "bounceScale");
         //this.imageSize = {x: system.texture.width, y: system.texture.height};
         this.time = 0;
     }
@@ -142,15 +188,31 @@ class ParticleInstance
         translate(this.position.x, this.position.y);
         rotate(this.rotation);
         scale(this.radius);
-        //tint(200, 100, 0);
         image(this.system.texture, 0, 0);
         pop();
-        var move = createVector(Constants.gravity.x * Constants.deltaTime, Constants.gravity.y * Constants.deltaTime);
-        this.velocity.add(move);
-        this.position.add(this.velocity);
-        this.rotation += this.rotationRate * Constants.deltaTime;
-        this.time += Constants.deltaTime;
-        if (this.time >= this.lifetime)
+
+        var size = this.radius * 2 * this.system.texture.width;
+
+        if (this.gravity)
+        {
+            var move = createVector(Constants.gravity.x * scaledDeltaTime(), Constants.gravity.y * scaledDeltaTime());
+            this.velocity.add(move);
+        }
+        var move2 = createVector(this.velocity.x * scaledDeltaTime(), this.velocity.y * scaledDeltaTime());
+        var newPosition = p5.Vector.add(this.position, move2);
+        var ground = groundRect();
+        if (this.collide && collideRectCircle(ground.x, ground.y, ground.width, ground.height, newPosition.x, newPosition.y, this.radius))
+        {
+            this.position.add(createVector(move2.x, move2.y * -this.bounceScale));
+            this.velocity.y *= -this.bounceScale;
+        }
+        else
+        {
+            this.position.add(move2);
+        }
+        this.rotation += this.rotationRate * scaledDeltaTime();
+        this.time += scaledDeltaTime();
+        if (this.time >= this.lifetime || this.position.x < -size || this.position.x > windowWidth + size) //If we go off-screen, destroy immediately.
         {
             return true;
         }
@@ -162,6 +224,7 @@ var time = 0;
 var cameraRot;
 var devTexture;
 var particleTest;
+var smoke;
 
 function preload()
 {
@@ -173,6 +236,7 @@ function setup()
     createCanvas(windowWidth, windowHeight);
     angleMode(DEGREES);
     particleTest = new ParticleSystem("assets/particles/particle_test.json");
+    smoke = new ParticleSystem("assets/particles/smoke.json");
 }
 
 function windowResized()
@@ -180,14 +244,41 @@ function windowResized()
     resizeCanvas(windowWidth, windowHeight);
 }
 
+var currentBackgroundColor = [56, 56, 56];
+var desiredBackgroundColor = [56, 56, 56];
+var fadeSpeed = 500;
+
+function stepColor()
+{
+    for (var i = 0; i < 3; i++)
+    {
+        currentBackgroundColor[i] = clamp(currentBackgroundColor[i] - fadeSpeed * scaledDeltaTime(), desiredBackgroundColor[i], 255);
+    }
+}
+
 function draw()
 {
-    background('#383838');
+    rectMode(CORNER);
+    ellipseMode(CENTER);
+    stepColor();
+    background(color(currentBackgroundColor[0], currentBackgroundColor[1], currentBackgroundColor[2]));
+    var lastMPos = createVector(pmouseX / windowWidth, pmouseY / windowHeight);
+    var curMPos = createVector(mouseX / windowWidth, mouseY /  windowHeight);
+    var mSpeed = p5.Vector.sub(curMPos, lastMPos).mag() * getFrameRate();
+
+    //timeScale = lerp(0.05, 1, clamp(mSpeed * 0.3, 0, 1));
+    //timeScale = 1;
+
+    smoke.draw();
     particleTest.draw();
+    var ground = groundRect();
+    rect(ground.x, ground.y, ground.width, ground.height);
 }
 
 function mousePressed()
 {
+    smoke.spawnInstance(mouseX, mouseY);
     particleTest.spawnInstance(mouseX, mouseY);
+    currentBackgroundColor = [255, 165, 0];
     return false;
 }
