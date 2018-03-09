@@ -1,0 +1,1 @@
+Low rumble at idle that ramps into high pitched, distorted sound when clicking.

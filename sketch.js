@@ -181,6 +181,9 @@ class ParticleInstance
         return clamp(this.time / this.lifetime, 0, 1);
     }
 
+    // NOTE: p5.js's _getTintedImageCanvas() is a joke. Can we custom implement tinting on the GPU?
+    // https://gist.github.com/mattdesl/1d734646184649c8bd8d //Blend mode version.
+    // https://www.sitepoint.com/parallel-javascript-with-paralleljs/ multithreading insanity method.
     draw()
     {
         push();
@@ -188,23 +191,27 @@ class ParticleInstance
         translate(this.position.x, this.position.y);
         rotate(this.rotation);
         scale(this.radius);
+        tint(100, 100, 100);
+        console.time('image');
         image(this.system.texture, 0, 0);
+        console.timeEnd('image');
         pop();
 
         var size = this.radius * 2 * this.system.texture.width;
 
         if (this.gravity)
         {
+            //Add delta scaled gravity to the velocity this frame
             var move = createVector(Constants.gravity.x * scaledDeltaTime(), Constants.gravity.y * scaledDeltaTime());
             this.velocity.add(move);
         }
-        var move2 = createVector(this.velocity.x * scaledDeltaTime(), this.velocity.y * scaledDeltaTime());
+        var move2 = createVector(this.velocity.x * scaledDeltaTime(), this.velocity.y * scaledDeltaTime()); //How far to move based on velocity
         var newPosition = p5.Vector.add(this.position, move2);
         var ground = groundRect();
         if (this.collide && collideRectCircle(ground.x, ground.y, ground.width, ground.height, newPosition.x, newPosition.y, this.radius))
         {
             this.position.add(createVector(move2.x, move2.y * -this.bounceScale));
-            this.velocity.y *= -this.bounceScale;
+            this.velocity.y *= -this.bounceScale; //Lazy! Reflect on the Y axis if we hit the grond (collision doesn't return a normal to properly reflect off)
         }
         else
         {
@@ -226,6 +233,8 @@ var devTexture;
 var particleTest;
 var smoke;
 
+var lowRumbleOsc;
+
 function preload()
 {
     devTexture = loadImage("assets/textures/devtexture.png");
@@ -235,6 +244,11 @@ function setup()
 {
     createCanvas(windowWidth, windowHeight);
     angleMode(DEGREES);
+    lowRumbleOsc = new p5.Oscillator();
+    lowRumbleOsc.setType('sine');
+    lowRumbleOsc.freq(50);
+    lowRumbleOsc.amp(0.3);
+    lowRumbleOsc.start();
     particleTest = new ParticleSystem("assets/particles/particle_test.json");
     smoke = new ParticleSystem("assets/particles/smoke.json");
 }
@@ -262,9 +276,9 @@ function draw()
     ellipseMode(CENTER);
     stepColor();
     background(color(currentBackgroundColor[0], currentBackgroundColor[1], currentBackgroundColor[2]));
-    var lastMPos = createVector(pmouseX / windowWidth, pmouseY / windowHeight);
-    var curMPos = createVector(mouseX / windowWidth, mouseY /  windowHeight);
-    var mSpeed = p5.Vector.sub(curMPos, lastMPos).mag() * getFrameRate();
+    //var lastMPos = createVector(pmouseX / windowWidth, pmouseY / windowHeight);
+    //var curMPos = createVector(mouseX / windowWidth, mouseY /  windowHeight);
+    //var mSpeed = p5.Vector.sub(curMPos, lastMPos).mag() * getFrameRate();
 
     //timeScale = lerp(0.05, 1, clamp(mSpeed * 0.3, 0, 1));
     //timeScale = 1;
