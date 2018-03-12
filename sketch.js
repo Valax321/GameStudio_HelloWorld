@@ -286,6 +286,11 @@ function draw()
     stepColor();
     stepAudio();
     background(color(currentBackgroundColor[0], currentBackgroundColor[1], currentBackgroundColor[2]));
+
+    /*
+    This did a superhot-like time slowdown when you weren't moving the mouse.
+    I turned it off because it was pretty pointless
+    */
     //var lastMPos = createVector(pmouseX / windowWidth, pmouseY / windowHeight);
     //var curMPos = createVector(mouseX / windowWidth, mouseY /  windowHeight);
     //var mSpeed = p5.Vector.sub(curMPos, lastMPos).mag() * getFrameRate();
