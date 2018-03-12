@@ -191,7 +191,6 @@ class ParticleInstance
         translate(this.position.x, this.position.y);
         rotate(this.rotation);
         scale(this.radius);
-        tint(100, 100, 100);
         console.time('image');
         image(this.system.texture, 0, 0);
         console.timeEnd('image');
@@ -234,6 +233,10 @@ var particleTest;
 var smoke;
 
 var lowRumbleOsc;
+var rumbleIdleFreq = 50;
+var rumbleHitFreq = 5000;
+var desiredRumbleFreq = rumbleIdleFreq;
+var rumbleDecaySpeed = 10000;
 
 function preload()
 {
@@ -245,8 +248,8 @@ function setup()
     createCanvas(windowWidth, windowHeight);
     angleMode(DEGREES);
     lowRumbleOsc = new p5.Oscillator();
-    lowRumbleOsc.setType('sine');
-    lowRumbleOsc.freq(50);
+    lowRumbleOsc.setType('triangle');
+    lowRumbleOsc.freq(desiredRumbleFreq);
     lowRumbleOsc.amp(0.3);
     lowRumbleOsc.start();
     particleTest = new ParticleSystem("assets/particles/particle_test.json");
@@ -270,11 +273,18 @@ function stepColor()
     }
 }
 
+function stepAudio()
+{
+    desiredRumbleFreq = clamp(desiredRumbleFreq - rumbleDecaySpeed * scaledDeltaTime(), rumbleIdleFreq, rumbleHitFreq);
+    lowRumbleOsc.freq(desiredRumbleFreq);
+}
+
 function draw()
 {
     rectMode(CORNER);
     ellipseMode(CENTER);
     stepColor();
+    stepAudio();
     background(color(currentBackgroundColor[0], currentBackgroundColor[1], currentBackgroundColor[2]));
     //var lastMPos = createVector(pmouseX / windowWidth, pmouseY / windowHeight);
     //var curMPos = createVector(mouseX / windowWidth, mouseY /  windowHeight);
@@ -294,5 +304,6 @@ function mousePressed()
     smoke.spawnInstance(mouseX, mouseY);
     particleTest.spawnInstance(mouseX, mouseY);
     currentBackgroundColor = [255, 165, 0];
+    desiredRumbleFreq = rumbleHitFreq;
     return false;
 }
