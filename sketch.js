@@ -191,9 +191,9 @@ class ParticleInstance
         translate(this.position.x, this.position.y);
         rotate(this.rotation);
         scale(this.radius);
-        console.time('image');
+        //console.time('image');
         image(this.system.texture, 0, 0);
-        console.timeEnd('image');
+        //console.timeEnd('image');
         pop();
 
         var size = this.radius * 2 * this.system.texture.width;
