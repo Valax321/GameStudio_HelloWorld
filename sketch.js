@@ -181,7 +181,7 @@ class ParticleInstance
         return clamp(this.time / this.lifetime, 0, 1);
     }
 
-    // NOTE: p5.js's _getTintedImageCanvas() is a joke. Can we custom implement tinting on the GPU?
+    // NOTE: p5.js's _getTintedImageCanvas() is a joke. It loops over every pixel using the CPU and tints it on another canvas.
     // https://gist.github.com/mattdesl/1d734646184649c8bd8d //Blend mode version.
     // https://www.sitepoint.com/parallel-javascript-with-paralleljs/ multithreading insanity method.
     draw()
